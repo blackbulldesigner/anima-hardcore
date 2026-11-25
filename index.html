@@ -1,0 +1,862 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Servidor hardcore semi vanilla de Minecraft 26.3 con mods. IP, descarga del modpack y cómo funciona Deuda de Alma.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Ánima Hardcore">
+<meta property="og:description" content="Aquí morir no es el final. Volver es lo caro. Servidor hardcore de Minecraft 26.3 con mods.">
+<meta property="og:url" content="https://blackbulldesigner.github.io/anima-hardcore/">
+<meta property="og:image" content="https://blackbulldesigner.github.io/anima-hardcore/img/og.jpg">
+<meta property="og:image:width" content="1920">
+<meta property="og:image:height" content="1080">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" href="img/banner_heart.png">
+<style>html, body { margin: 0; } img { max-width: 100%; } [hidden] { display: none !important; }</style>
+<title>Ánima Hardcore</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jacquard+24&family=JetBrains+Mono:wght@700&family=Pixelify+Sans:wght@400;500;600;700&family=Silkscreen:wght@400;700&display=swap">
+<style>
+/* Layout: one dark night page, centered 1120px column, sections stacked like a long inventory; pixel UI pieces (slots, chips, number boxes) carry the structure. */
+:root {
+  --bg: #0c1418;
+  --panel: #0f1a1e;
+  --panel-2: #0a1114;
+  --line: #22333a;
+  --line-2: #2b4148;
+  --ink: #eef5f3;
+  --muted: #a9bcbf;
+  --dim: #8aa3a8;
+  --cyan: #7df3f0;
+  --cyan-deep: #3d7f82;
+  --red: #ef5a64;
+  --gold: #e8b84a;
+  --slot: #393940;
+  --slot-2: #2b2b31;
+  --slot-gap: #1b1b20;
+  --f-title: "Jacquard 24", "Pixelify Sans", Georgia, serif;
+  --f-head: "Pixelify Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-label: "Silkscreen", "Pixelify Sans", ui-monospace, monospace;
+  --f-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--f-head);
+  font-size: 18px;
+  line-height: 1.5;
+  font-variant-ligatures: none;
+  -webkit-font-smoothing: antialiased;
+}
+img.px { image-rendering: pixelated; }
+a { color: var(--cyan); }
+a:hover { color: var(--ink); }
+:focus-visible { outline: 3px solid var(--cyan); outline-offset: 3px; }
+h1, h2, h3, h4 { margin: 0; font-weight: 700; text-wrap: balance; }
+p { margin: 0; }
+
+.wrap {
+  width: 100%;
+  max-width: 1184px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+@media (min-width: 640px) {
+  .wrap {
+    padding-left: max(32px, env(safe-area-inset-left, 0px));
+    padding-right: max(32px, env(safe-area-inset-right, 0px));
+  }
+}
+
+.label {
+  font-family: var(--f-label);
+  font-size: 15px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+.label.dim { color: var(--dim); }
+
+/* ---------- top bar ---------- */
+.topbar { padding-block: 22px; border-bottom: 2px solid var(--line); }
+.topbar .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--cyan); }
+.brand img { width: 28px; height: 28px; }
+.brand span { font-family: var(--f-label); font-size: 17px; letter-spacing: 0.3em; }
+.nav { display: flex; align-items: center; gap: 26px; flex-wrap: wrap; }
+.nav a.navlink { color: var(--muted); text-decoration: none; font-size: 17px; }
+.nav a.navlink:hover { color: var(--ink); }
+@media (max-width: 760px) { .nav a.navlink { display: none; } }
+
+/* ---------- buttons ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: 52px; padding: 0 22px;
+  font-family: var(--f-label); font-weight: 700; font-size: 16px; letter-spacing: 0.2em; text-transform: uppercase;
+  text-decoration: none; cursor: pointer;
+  border: 3px solid var(--cyan); background: var(--cyan); color: var(--bg);
+}
+.btn:hover { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.btn.ghost { background: transparent; color: var(--cyan); }
+.btn.ghost:hover { background: var(--cyan); color: var(--bg); }
+.btn.small { min-height: 42px; padding: 0 16px; font-size: 14px; }
+.btn.invite { font-family: var(--f-mono); text-transform: none; letter-spacing: 0; font-size: 18px; }
+
+/* ---------- hero ---------- */
+.hero {
+  position: relative; overflow: hidden;
+  padding-block: 56px 72px;
+  background: radial-gradient(900px 560px at 82% 10%, #15282f 0%, rgba(21, 40, 47, 0) 70%), var(--bg);
+}
+.hero .wrap { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 32px; align-items: center; }
+.motes { position: fixed; inset: 0; pointer-events: none; z-index: 5; overflow: hidden; }
+.motes span {
+  position: absolute; bottom: -24px; width: var(--s, 8px); height: var(--s, 8px);
+  background: var(--cyan-deep); opacity: 0;
+  animation: mote var(--d, 22s) linear var(--w, 0s) infinite;
+}
+.motes span.b { background: var(--cyan); }
+@keyframes mote {
+  0% { transform: translateY(0); opacity: 0; }
+  12% { opacity: var(--o, 0.45); }
+  85% { opacity: var(--o, 0.45); }
+  100% { transform: translateY(-112vh); opacity: 0; }
+}
+.hearts { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.hearts svg { width: 28px; height: 24px; display: block; }
+.hearts .label { margin-left: 12px; font-size: 13px; color: var(--dim); }
+.title {
+  margin-top: 10px;
+  font-family: var(--f-title); font-weight: 400;
+  font-size: clamp(92px, 17vw, 208px); line-height: 0.95; letter-spacing: 0.01em;
+  color: #e8fbfa;
+  text-shadow: 0 0 28px rgba(125, 243, 240, 0.42), 0 0 4px rgba(125, 243, 240, 0.5);
+}
+.tagline { margin-top: 18px; font-family: var(--f-label); font-size: clamp(14px, 2vw, 19px); letter-spacing: 0.3em; color: var(--ink); }
+.thesis { margin-top: 18px; font-size: clamp(26px, 3.6vw, 40px); line-height: 1.2; }
+.thesis span { display: block; }
+.thesis .c { color: var(--cyan); }
+.crystal { width: clamp(140px, 20vw, 240px); height: auto; filter: drop-shadow(0 0 26px rgba(125, 243, 240, 0.5)); animation: rise 0.9s 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both, float 5s 1.4s ease-in-out infinite; }
+@keyframes float {
+  0%, 100% { transform: translateY(0); filter: drop-shadow(0 0 26px rgba(125, 243, 240, 0.5)); }
+  50% { transform: translateY(-12px); filter: drop-shadow(0 0 42px rgba(125, 243, 240, 0.78)); }
+}
+@media (max-width: 760px) {
+  .hero .wrap { grid-template-columns: minmax(0, 1fr); }
+  .crystal-cell { display: none; }
+}
+
+.ipbox { margin-top: 34px; display: flex; flex-direction: column; gap: 10px; max-width: 640px; }
+.iprow { display: flex; flex-wrap: wrap; border: 3px solid var(--cyan); background: var(--panel-2); }
+.iprow code {
+  flex: 1 1 240px; min-width: 0; display: flex; align-items: center;
+  padding: 12px 20px; font-family: var(--f-mono); font-size: clamp(20px, 2.6vw, 26px); color: #ffffff;
+  overflow-wrap: anywhere; user-select: all;
+}
+.iprow .btn { border-width: 0; min-height: 58px; }
+.status { min-height: 1.5em; font-size: 16px; color: var(--muted); }
+.actions { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+.meta { margin-top: 12px; font-size: 15px; color: var(--dim); }
+
+/* ---------- sections ---------- */
+section.block { padding-block: 88px; border-top: 2px solid var(--line); }
+.head { display: flex; flex-direction: column; gap: 14px; max-width: 760px; }
+.head h2 { font-size: clamp(40px, 6vw, 72px); line-height: 1.04; }
+.head h2 .c { color: var(--cyan); display: block; }
+.head p { color: var(--muted); font-size: 20px; max-width: 62ch; }
+
+.num {
+  width: 56px; height: 56px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border: 3px solid #6fe3e0; color: var(--cyan); font-size: 26px;
+}
+
+/* cómo entrar */
+.steps { margin-top: 44px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.step { border: 2px solid var(--line); background: var(--panel); padding: 26px; display: flex; flex-direction: column; gap: 14px; }
+.step h3 { font-size: 26px; line-height: 1.2; }
+.step p { color: var(--muted); }
+.step code { font-family: var(--f-mono); font-size: 0.92em; color: var(--ink); }
+@media (max-width: 860px) { .steps { grid-template-columns: minmax(0, 1fr); } }
+
+/* deuda: línea de tiempo */
+.timeline { margin-top: 48px; display: flex; flex-direction: column; }
+.tl { display: grid; grid-template-columns: 56px minmax(0, 1fr) minmax(0, 360px); gap: 28px; }
+.tl .rail { display: flex; flex-direction: column; align-items: center; }
+.tl .rail::after { content: ""; flex: 1; width: 3px; background: #24474b; }
+.tl:last-child .rail::after { display: none; }
+.tl .body { padding: 6px 0 44px; }
+.tl h3 { font-size: 30px; line-height: 1.2; }
+.tl p { margin-top: 8px; color: var(--muted); max-width: 56ch; }
+.photo { width: 100%; max-width: 100%; height: auto; transform: rotate(1.5deg); box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55); margin-bottom: 40px; }
+.tl:nth-child(even) .photo { transform: rotate(-1.5deg); }
+@media (max-width: 860px) {
+  .tl { grid-template-columns: 56px minmax(0, 1fr); }
+  .tl .photo-cell { grid-column: 2; }
+  .photo { max-width: 420px; margin-bottom: 36px; }
+}
+
+.subhead { margin-top: 64px; display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.subhead h3 { font-size: clamp(30px, 4vw, 44px); line-height: 1.1; }
+.subhead p { color: var(--muted); max-width: 52ch; }
+
+.curses { margin-top: 24px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.curse { display: flex; gap: 16px; align-items: center; padding: 16px; border: 2px solid var(--line); background: var(--panel); }
+.curse .ico { width: 64px; height: 64px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border: 2px solid var(--line); background: var(--panel-2); }
+.curse .ico img { width: 54px; height: 54px; }
+.curse h4 { font-size: 23px; line-height: 1.15; }
+.curse .label { font-size: 11px; letter-spacing: 0.16em; display: block; margin-top: 3px; }
+.curse p { margin-top: 6px; font-size: 16px; line-height: 1.4; color: var(--muted); }
+@media (max-width: 960px) { .curses { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 620px) { .curses { grid-template-columns: minmax(0, 1fr); } }
+
+.pair { margin-top: 64px; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 24px; }
+@media (max-width: 920px) { .pair { grid-template-columns: minmax(0, 1fr); } }
+.card { border: 2px solid var(--line); background: var(--panel); padding: 30px; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.card .top { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.card h3 { font-size: clamp(34px, 4.4vw, 50px); line-height: 1.05; }
+.card h3.gothic { font-family: var(--f-title); font-weight: 400; font-size: clamp(56px, 7vw, 84px); line-height: 0.95; color: #e8fbfa; text-shadow: 0 0 22px rgba(125, 243, 240, 0.4); }
+.card .lead { font-size: 20px; color: var(--ink); }
+.card .lead .c { color: var(--cyan); }
+.cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+@media (max-width: 560px) { .cols { grid-template-columns: minmax(0, 1fr); } }
+ul.bul { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 9px; color: #c9d6d8; font-size: 17px; line-height: 1.45; }
+ul.bul li { display: grid; grid-template-columns: 8px minmax(0, 1fr); gap: 12px; }
+ul.bul li::before { content: ""; width: 8px; height: 8px; margin-top: 9px; background: var(--cyan); }
+ul.bul li.hot { color: var(--ink); }
+ul.bul li.hot::before { background: var(--red); }
+.seals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.seal { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 2px solid var(--line); background: var(--panel-2); min-width: 0; }
+.seal img { width: 40px; height: 40px; flex-shrink: 0; }
+.seal b { display: block; font-size: 17px; }
+.seal span { display: block; font-size: 14px; color: var(--muted); line-height: 1.3; }
+@media (max-width: 560px) { .seals { grid-template-columns: minmax(0, 1fr); } }
+.prize { color: var(--muted); }
+.prize b { color: var(--ink); }
+
+.verdicts { display: flex; flex-direction: column; gap: 14px; }
+.verdict { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 16px; align-items: center; }
+.chip {
+  height: 34px; display: flex; align-items: center; justify-content: center;
+  border: 2px solid currentColor; font-family: var(--f-label); font-weight: 700; font-size: 13px; letter-spacing: 0.12em;
+}
+.chip.yes { color: var(--cyan); }
+.chip.but { color: var(--gold); }
+.chip.no { color: var(--red); }
+.verdict span:last-child { font-size: 19px; line-height: 1.35; }
+.totem-img { width: 112px; height: 112px; filter: drop-shadow(0 0 18px rgba(125, 243, 240, 0.45)); }
+.compass { display: flex; align-items: center; gap: 14px; padding-top: 16px; border-top: 2px solid var(--line); color: var(--muted); }
+.compass img { width: 40px; height: 40px; flex-shrink: 0; }
+
+/* territorios */
+.terr { margin-top: 48px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 36px; align-items: start; }
+@media (max-width: 960px) { .terr { grid-template-columns: minmax(0, 1fr); } }
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.fact { border-top: 2px solid var(--line); padding-top: 14px; }
+.fact b { display: block; font-size: clamp(34px, 4vw, 46px); line-height: 1; color: var(--cyan); }
+.fact span { display: block; margin-top: 8px; font-size: 16px; line-height: 1.4; color: var(--muted); }
+@media (max-width: 480px) { .facts { grid-template-columns: minmax(0, 1fr); } }
+.ladder { margin-top: 28px; display: flex; flex-direction: column; gap: 6px; }
+.ladder .row { display: grid; grid-template-columns: 76px 52px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 8px 14px; background: var(--panel); border: 2px solid #1f3036; }
+.ladder .row .label { font-size: 11px; letter-spacing: 0.14em; color: var(--dim); }
+.ladder .row svg { display: block; margin: 0 auto; }
+.ladder .row span { font-size: 17px; }
+.ladder .row b { color: var(--cyan); font-size: 17px; white-space: nowrap; }
+@media (max-width: 480px) {
+  .ladder .row { grid-template-columns: 44px minmax(0, 1fr) auto; }
+  .ladder .row .label { display: none; }
+}
+.rules { margin-top: 26px; display: flex; flex-direction: column; gap: 14px; }
+.rules p { color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips span { padding: 6px 12px; border: 2px solid var(--line-2); background: var(--panel); font-size: 16px; color: #dfe9ea; }
+.chips.alt span { border-color: #33676a; color: var(--cyan); }
+.mapwin { border: 3px solid #24363d; background: var(--panel-2); min-width: 0; }
+.mapwin .bar { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 18px; background: #0e181c; border-bottom: 2px solid #1d2b31; flex-wrap: wrap; }
+.mapwin .tabs { display: flex; gap: 20px; font-size: 16px; color: var(--dim); }
+.mapwin .tabs .on { color: var(--cyan); border-bottom: 3px solid var(--cyan); }
+.mapwin .canvas { padding: 14px; }
+.mapwin svg { width: 100%; height: auto; display: block; }
+.mapwin .legend { display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; padding: 12px 18px; border-top: 2px solid #1d2b31; font-size: 15px; color: #c9d6d8; }
+.legend i { display: inline-block; width: 14px; height: 14px; margin-right: 8px; vertical-align: -1px; }
+.release { margin-top: 28px; padding: 18px 20px; border: 2px solid var(--line); background: var(--panel); color: var(--muted); }
+.release b { color: var(--ink); }
+
+/* lo demás */
+.feats { margin-top: 44px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 36px 28px; }
+.feat { border-top: 2px solid var(--line); padding-top: 18px; display: flex; flex-direction: column; gap: 8px; }
+.feat h3 { font-size: 24px; line-height: 1.2; }
+.feat p { color: var(--muted); font-size: 17px; }
+.feat .label { font-size: 11px; letter-spacing: 0.18em; color: var(--dim); }
+@media (max-width: 900px) { .feats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .feats { grid-template-columns: minmax(0, 1fr); } }
+.nope { margin-top: 56px; }
+.nope .label { color: var(--red); }
+.nopes { margin-top: 18px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.nopes div { display: flex; flex-direction: column; gap: 6px; }
+.nopes h4 { font-size: 22px; display: flex; align-items: center; gap: 12px; }
+.nopes h4::before { content: "X"; font-family: var(--f-label); font-weight: 700; color: var(--red); font-size: 22px; }
+.nopes p { color: var(--muted); font-size: 17px; }
+@media (max-width: 700px) { .nopes { grid-template-columns: minmax(0, 1fr); } }
+
+details.mods { margin-top: 56px; border: 2px solid var(--line); background: var(--panel); }
+details.mods summary { cursor: pointer; padding: 18px 22px; font-size: 20px; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+details.mods summary::-webkit-details-marker { display: none; }
+details.mods summary::after { content: "+"; font-family: var(--f-label); color: var(--cyan); font-size: 22px; }
+details.mods[open] summary::after { content: "−"; }
+.modgroups { padding: 4px 22px 24px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 32px; }
+.modgroups h4 { font-family: var(--f-label); font-size: 13px; letter-spacing: 0.2em; color: var(--cyan); font-weight: 400; }
+.modgroups p { margin-top: 8px; color: #c9d6d8; font-size: 16px; line-height: 1.6; }
+@media (max-width: 760px) { .modgroups { grid-template-columns: minmax(0, 1fr); } }
+
+/* cierre */
+.final { padding-block: 96px 80px; border-top: 2px solid var(--line); background: radial-gradient(800px 420px at 20% 100%, #13252b 0%, rgba(19, 37, 43, 0) 70%), var(--bg); }
+.final h2 { font-size: clamp(44px, 7vw, 84px); line-height: 1; }
+.final p.sub { margin-top: 12px; font-size: 22px; color: var(--muted); }
+footer { padding-block: 28px 32px; color: var(--dim); font-size: 15px; }
+footer .wrap { display: flex; flex-direction: column; gap: 6px; }
+.hotbar {
+  height: 122px;
+  background:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 0) 56px, var(--slot-gap) 56px, var(--slot-gap) 60px),
+    linear-gradient(180deg, var(--slot-gap) 0, var(--slot-gap) 4px, var(--slot) 4px, var(--slot) 60px, var(--slot-gap) 60px, var(--slot-gap) 64px, var(--slot-2) 64px, var(--slot-2) 122px);
+  position: relative;
+  margin-bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
+}
+.hotbar::after { content: ""; position: absolute; left: 480px; top: 4px; width: 56px; height: 56px; background: #d8a431; box-shadow: inset 0 4px 0 #f0c552, inset 0 -4px 0 #a97a1c; }
+@media (max-width: 520px) { .hotbar::after { left: 180px; } }
+
+/* ---------- movimiento ---------- */
+@keyframes rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+@keyframes pop { from { opacity: 0; transform: scale(0.3); } to { opacity: 1; transform: none; } }
+@keyframes shake {
+  0%, 100% { transform: none; }
+  20% { transform: translateX(-3px) rotate(-10deg); }
+  40% { transform: translateX(3px) rotate(10deg); }
+  60% { transform: translateX(-2px) rotate(-6deg); }
+  80% { transform: translateX(2px) rotate(4deg); }
+}
+@keyframes lose { from { opacity: 1; } to { opacity: 0; } }
+@keyframes soul {
+  0% { opacity: 0; filter: blur(10px); }
+  35% { opacity: 0.85; filter: blur(2px); }
+  42% { opacity: 0.25; }
+  52% { opacity: 1; filter: blur(0); }
+  62% { opacity: 0.6; }
+  100% { opacity: 1; filter: blur(0); }
+}
+@keyframes breathe {
+  0%, 100% { text-shadow: 0 0 28px rgba(125, 243, 240, 0.42), 0 0 4px rgba(125, 243, 240, 0.5); }
+  50% { text-shadow: 0 0 48px rgba(125, 243, 240, 0.65), 0 0 8px rgba(125, 243, 240, 0.75); }
+}
+@keyframes grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes lit {
+  0% { box-shadow: 0 0 0 rgba(125, 243, 240, 0); background-color: transparent; }
+  30% { box-shadow: 0 0 26px rgba(125, 243, 240, 0.7); background-color: rgba(125, 243, 240, 0.18); }
+  100% { box-shadow: 0 0 0 rgba(125, 243, 240, 0); background-color: transparent; }
+}
+@keyframes drop { from { opacity: 0; transform: translateY(34px) rotate(9deg) scale(0.94); } }
+@keyframes march { to { stroke-dashoffset: -11; } }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes claim { 0%, 100% { fill-opacity: 0.24; } 50% { fill-opacity: 0.46; } }
+@keyframes wiggle { 0%, 100% { transform: none; } 25% { transform: rotate(-12deg); } 75% { transform: rotate(12deg); } }
+@keyframes flash { from { box-shadow: 0 0 0 0 rgba(125, 243, 240, 0.7); } to { box-shadow: 0 0 0 16px rgba(125, 243, 240, 0); } }
+@keyframes slot { from { transform: translateX(0); } to { transform: translateX(540px); } }
+@keyframes slotS { from { transform: translateX(0); } to { transform: translateX(240px); } }
+
+/* entrada del inicio */
+.seq { animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both; animation-delay: calc(var(--i, 0) * 110ms + 150ms); }
+.hearts svg { animation: pop 0.38s cubic-bezier(0.3, 1.6, 0.5, 1) both; animation-delay: calc(var(--h, 0) * 70ms + 250ms); }
+.hearts svg.lost {
+  animation-name: pop, shake;
+  animation-duration: 0.38s, 0.5s;
+  animation-delay: calc(var(--h, 0) * 70ms + 250ms), 1.5s;
+  animation-fill-mode: both, none;
+  animation-timing-function: cubic-bezier(0.3, 1.6, 0.5, 1), steps(5);
+}
+.hearts .was { opacity: 0; animation: lose 0.25s 1.95s both; }
+.hearts .lostlabel { animation: rise 0.5s 2.1s both; }
+.title { animation: soul 1.6s 0.35s both, breathe 6s 2s ease-in-out infinite; }
+.card h3.gothic { animation: breathe 6s ease-in-out infinite; }
+.totem-img { animation: float 4.5s ease-in-out infinite; }
+
+/* al hacer scroll: todo es visible sin script; esto solo anima al entrar */
+.js-motion .in { animation: rise 0.75s cubic-bezier(0.2, 0.7, 0.2, 1) both; animation-delay: var(--delay, 0s); }
+.tl .rail::after { transform-origin: top; }
+.js-motion .tl.in .rail::after { animation: grow 1.1s 0.25s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.js-motion .tl.in .num { animation: lit 1.4s 0.15s both; }
+.js-motion .tl.in .photo { animation: drop 0.9s 0.2s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+
+/* mapa */
+.mapwin .sel { animation: march 0.9s linear infinite; }
+.mapwin .tip { animation: bob 2.6s ease-in-out infinite; }
+.mapwin .me { animation: bob 1.6s ease-in-out infinite; }
+.mapwin .mine { animation: claim 3.2s ease-in-out infinite; }
+
+/* botones y tarjetas */
+.btn { box-shadow: 0 5px 0 #2b8d8a; transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
+.btn.ghost { box-shadow: 0 5px 0 #1d3f42; }
+.btn:hover, .btn.ghost:hover { transform: translateY(-2px); box-shadow: 0 7px 0 #2b8d8a; }
+.btn:active, .btn.ghost:active { transform: translateY(4px); box-shadow: 0 1px 0 #2b8d8a; }
+.iprow .btn, .iprow .btn:hover, .iprow .btn:active { box-shadow: none; transform: none; }
+.iprow.flash { animation: flash 0.8s ease-out; }
+.step, .curse, .seal { transition: transform 0.2s ease, border-color 0.2s ease; }
+.step:hover, .curse:hover, .seal:hover { transform: translateY(-4px); border-color: #33676a; }
+.curse:hover .ico img, .seal:hover img { animation: wiggle 0.5s steps(4); }
+
+/* la casilla dorada recorre la barra */
+.hotbar { overflow: hidden; }
+.hotbar::after { animation: slot 10.8s steps(9, end) infinite alternate; }
+@media (max-width: 520px) {
+  .hotbar::after { left: 60px; animation: slotS 6s steps(4, end) infinite alternate; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .motes { display: none; }
+}
+</style>
+
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="heart-full" viewBox="0 0 7 6" shape-rendering="crispEdges"><path fill="#3a0a0e" d="M1 0h2v1h-2zM4 0h2v1h-2zM0 1h1v1h-1zM3 1h1v1h-1zM6 1h1v1h-1zM0 2h1v1h-1zM6 2h1v1h-1zM1 3h1v1h-1zM5 3h1v1h-1zM2 4h1v1h-1zM4 4h1v1h-1zM3 5h1v1h-1z"/><path fill="#e5323f" d="M2 1h1v1h-1zM4 1h2v1h-2zM1 2h5v1h-5zM2 3h3v1h-3zM3 4h1v1h-1z"/><path fill="#ff9aa2" d="M1 1h1v1h-1z"/></symbol>
+    <symbol id="heart-empty" viewBox="0 0 7 6" shape-rendering="crispEdges"><path fill="#070b0d" d="M1 0h2v1h-2zM4 0h2v1h-2zM0 1h1v1h-1zM3 1h1v1h-1zM6 1h1v1h-1zM0 2h1v1h-1zM6 2h1v1h-1zM1 3h1v1h-1zM5 3h1v1h-1zM2 4h1v1h-1zM4 4h1v1h-1zM3 5h1v1h-1z"/><path fill="#1d262b" d="M1 1h2v1h-2zM4 1h2v1h-2zM1 2h5v1h-5zM2 3h3v1h-3zM3 4h1v1h-1z"/></symbol>
+  </defs>
+</svg>
+
+<div class="motes" aria-hidden="true">
+  <span style="left:4%;--s:8px;--d:18s;--w:-2s;--o:.55"></span>
+  <span style="left:11%;--s:6px;--d:24s;--w:-11s;--o:.4"></span>
+  <span class="b" style="left:17%;--s:6px;--d:20s;--w:-6s;--o:.25"></span>
+  <span style="left:23%;--s:6px;--d:27s;--w:-19s;--o:.35"></span>
+  <span style="left:29%;--s:8px;--d:22s;--w:-4s;--o:.5"></span>
+  <span style="left:36%;--s:6px;--d:25s;--w:-15s;--o:.35"></span>
+  <span style="left:42%;--s:12px;--d:19s;--w:-9s;--o:.4"></span>
+  <span class="b" style="left:48%;--s:6px;--d:23s;--w:-1s;--o:.22"></span>
+  <span style="left:54%;--s:8px;--d:28s;--w:-21s;--o:.4"></span>
+  <span style="left:60%;--s:6px;--d:21s;--w:-13s;--o:.5"></span>
+  <span style="left:66%;--s:10px;--d:26s;--w:-7s;--o:.35"></span>
+  <span style="left:72%;--s:6px;--d:20s;--w:-16s;--o:.45"></span>
+  <span class="b" style="left:78%;--s:8px;--d:24s;--w:-3s;--o:.22"></span>
+  <span style="left:84%;--s:6px;--d:29s;--w:-23s;--o:.35"></span>
+  <span style="left:89%;--s:12px;--d:22s;--w:-10s;--o:.4"></span>
+  <span style="left:94%;--s:6px;--d:19s;--w:-5s;--o:.5"></span>
+  <span style="left:7%;--s:6px;--d:30s;--w:-26s;--o:.3"></span>
+  <span style="left:51%;--s:10px;--d:31s;--w:-17s;--o:.3"></span>
+</div>
+
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="#inicio"><img class="px" src="img/banner_heart.png" alt=""><span>ÁNIMA</span></a>
+    <nav class="nav" aria-label="Secciones">
+      <a class="navlink" href="#entrar">Cómo entrar</a>
+      <a class="navlink" href="#deuda">Deuda de Alma</a>
+      <a class="navlink" href="#territorios">Territorios</a>
+      <a class="navlink" href="#mods">Mods</a>
+      <a class="btn small ghost" href="https://discord.gg/K5Yx7yMeAg" target="_blank" rel="noopener">Discord</a>
+    </nav>
+  </div>
+</header>
+
+<main id="inicio">
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <p class="label seq" style="--i:0">Servidor hardcore · MC 26.3 · NeoForge</p>
+        <div class="hearts" style="margin-top:28px" role="img" aria-label="Siete corazones llenos y tres vacíos: volver de la muerte cuesta tres corazones">
+          <svg style="--h:0"><use href="#heart-full"/></svg><svg style="--h:1"><use href="#heart-full"/></svg><svg style="--h:2"><use href="#heart-full"/></svg><svg style="--h:3"><use href="#heart-full"/></svg><svg style="--h:4"><use href="#heart-full"/></svg><svg style="--h:5"><use href="#heart-full"/></svg><svg style="--h:6"><use href="#heart-full"/></svg><svg class="lost" style="--h:7"><use href="#heart-empty"/><use class="was" href="#heart-full"/></svg><svg class="lost" style="--h:8"><use href="#heart-empty"/><use class="was" href="#heart-full"/></svg><svg class="lost" style="--h:9"><use href="#heart-empty"/><use class="was" href="#heart-full"/></svg>
+          <span class="label lostlabel">−3 al volver</span>
+        </div>
+        <h1 class="title">ÁNIMA</h1>
+        <p class="tagline seq" style="--i:8">SEMI VANILLA · HARDCORE · CON MODS</p>
+        <p class="thesis seq" style="--i:9"><span>Aquí morir no es el final.</span><span class="c">Volver es lo caro.</span></p>
+
+        <div class="ipbox seq" style="--i:11">
+          <span class="label dim">IP del servidor</span>
+          <div class="iprow">
+            <code id="ip-hero" data-ip>165.217.128.151:9085</code>
+            <button class="btn" type="button" id="copy-hero" data-copy="ip-hero" data-status="status-hero">Copiar IP</button>
+          </div>
+          <p class="status" id="status-hero" aria-live="polite"></p>
+        </div>
+        <div class="actions seq" style="--i:12">
+          <a class="btn" data-modpack href="https://github.com/blackbulldesigner/anima-hardcore/releases/latest/download/Anima-Hardcore.mrpack" target="_blank" rel="noopener">Descargar modpack</a>
+          <a class="btn ghost" href="https://discord.gg/K5Yx7yMeAg" target="_blank" rel="noopener">Entrar al Discord</a>
+        </div>
+        <p class="meta seq" style="--i:13" data-modpack-note>Ánima Hardcore 1.0.0 · 54 mods · 1.4 MB · archivo .mrpack desde GitHub</p>
+      </div>
+      <div class="crystal-cell"><img class="px crystal" src="img/soul_0.png" alt="" width="240" height="240"></div>
+    </div>
+  </section>
+
+  <section class="block" id="entrar">
+    <div class="wrap">
+      <div class="head">
+        <p class="label">Cómo entrar</p>
+        <h2>Tres pasos <span class="c">y ya estás dentro.</span></h2>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="num">1</div>
+          <h3>Descarga el modpack</h3>
+          <p>Es un solo archivo <code>.mrpack</code> de 1.4 MB con todo adentro.</p>
+        </div>
+        <div class="step">
+          <div class="num">2</div>
+          <h3>Ábrelo en tu launcher</h3>
+          <p>Modrinth App o Prism Launcher lo importan directo y te instalan NeoForge y todos los mods.</p>
+        </div>
+        <div class="step">
+          <div class="num">3</div>
+          <h3>Entra al server</h3>
+          <p>Pega la IP en Multijugador y listo. Trae a tus compas: los vas a necesitar.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="deuda">
+    <div class="wrap">
+      <div class="head">
+        <p class="label">Deuda de Alma · mod del server</p>
+        <h2>¿Y si te mueres? <span class="c">No se acaba. Pero sale caro.</span></h2>
+      </div>
+
+      <div class="timeline">
+        <div class="tl">
+          <div class="rail"><div class="num">1</div></div>
+          <div class="body">
+            <h3>Te mueres</h3>
+            <p>Quedas como alma en pena: ves el mundo, pero ya no lo tocas. Tu fragmento flota donde caíste y se apaga en cinco días de juego. Mientras, puedes marcar mobs, objetos o bloques para guiar a los vivos.</p>
+          </div>
+          <div class="photo-cell"><img class="photo" src="img/foto_fragmento.png" alt="Un fragmento de alma flotando donde alguien cayó" width="360" height="228"></div>
+        </div>
+        <div class="tl">
+          <div class="rail"><div class="num">2</div></div>
+          <div class="body">
+            <h3>Tus compas te buscan</h3>
+            <p>Llevan tu fragmento a un santuario de oro, obsidiana y ladrillo, con el agua de almas despierta por un farol de almas. La Brújula de Almas les dice dónde quedó.</p>
+          </div>
+          <div class="photo-cell"><img class="photo" src="img/foto_despierto.png" alt="Un santuario completo con el agua de almas despierta" width="360" height="228"></div>
+        </div>
+        <div class="tl">
+          <div class="rail"><div class="num">3</div></div>
+          <div class="body">
+            <h3>El ritual</h3>
+            <p>Vuelves a la vida. El precio: 3 corazones de vida máxima, repartidos entre quienes te reviven. Quien se mete al agua comparte el costo.</p>
+          </div>
+          <div class="photo-cell"></div>
+        </div>
+        <div class="tl">
+          <div class="rail"><div class="num">4</div></div>
+          <div class="body">
+            <h3>Quedas en deuda</h3>
+            <p>Vuelves con una maldición y vinculado a quien pagó: parte del daño de uno le llega al otro. Si mueres sin pagar, esos corazones se pierden para siempre.</p>
+          </div>
+          <div class="photo-cell"></div>
+        </div>
+        <div class="tl">
+          <div class="rail"><div class="num">5</div></div>
+          <div class="body">
+            <h3>Pagas la deuda</h3>
+            <p>Un Sello de Purga abre el portal al coliseo. Dentro espera tu Eco, con tu cara y tu equipo. Véncelo y quedas libre.</p>
+          </div>
+          <div class="photo-cell"><img class="photo" src="img/foto_coliseo.png" alt="El Eco esperando en el coliseo, con la cara y el escudo de su dueño" width="360" height="228"></div>
+        </div>
+      </div>
+
+      <div class="subhead">
+        <h3>Vuelves, pero no igual.</h3>
+        <p>Te toca una maldición según cómo moriste. Se juntan hasta 3 y solo se quitan venciendo a tu Eco.</p>
+      </div>
+      <div class="curses">
+        <div class="curse"><div class="ico"><img class="px" src="img/curse_vertigo.png" alt=""></div><div><h4>Vértigo</h4><span class="label">Por caída</span><p>La caída duele desde 2 bloques, y más.</p></div></div>
+        <div class="curse"><div class="ico"><img class="px" src="img/curse_ceniza.png" alt=""></div><div><h4>Ceniza</h4><span class="label">Por fuego</span><p>El sol te quema si no llevas casco.</p></div></div>
+        <div class="curse"><div class="ico"><img class="px" src="img/curse_presa.png" alt=""></div><div><h4>Presa</h4><span class="label">Por mobs</span><p>Los mobs te ven desde el doble de lejos.</p></div></div>
+        <div class="curse"><div class="ico"><img class="px" src="img/curse_ahogo.png" alt=""></div><div><h4>Ahogo</h4><span class="label">Ahogado</span><p>El aire te dura la mitad bajo el agua.</p></div></div>
+        <div class="curse"><div class="ico"><img class="px" src="img/curse_desgarro.png" alt=""></div><div><h4>Desgarro</h4><span class="label">Por el vacío</span><p>Al recibir daño te teletransportas al azar.</p></div></div>
+        <div class="curse"><div class="ico"><img class="px" src="img/curse_estruendo.png" alt=""></div><div><h4>Estruendo</h4><span class="label">Por explosión</span><p>Las explosiones te hacen el doble.</p></div></div>
+        <div class="curse"><div class="ico"><img class="px" src="img/curse_marchito.png" alt=""></div><div><h4>Marchito</h4><span class="label">Por magia</span><p>Toda curación te cura la mitad.</p></div></div>
+        <div class="curse"><div class="ico"><img class="px" src="img/curse_voraz.png" alt=""></div><div><h4>Voraz</h4><span class="label">Por hambre</span><p>Te da hambre el doble de rápido.</p></div></div>
+        <div class="curse"><div class="ico"><img class="px" src="img/curse_fragil.png" alt=""></div><div><h4>Fragilidad</h4><span class="label">Otra muerte</span><p>Recibes un 30% más de daño.</p></div></div>
+      </div>
+
+      <div class="pair">
+        <article class="card">
+          <div class="top">
+            <h3 class="gothic">Tu Eco</h3>
+            <span class="label dim">El coliseo</span>
+          </div>
+          <p class="lead">Tiene tu cara y tu equipo. <span class="c">Y solo tú lo puedes rematar.</span></p>
+          <div class="cols">
+            <div>
+              <p class="label">Cómo pelea</p>
+              <ul class="bul">
+                <li>Usa tu mejor arma.</li>
+                <li>Bloquea de frente: rodéalo o bájale la guardia con un hacha.</li>
+                <li>Si te alejas, te alcanza con perlas.</li>
+                <li>Si moriste con arco, te dispara.</li>
+                <li>Si moriste con tótem, revive una vez.</li>
+                <li>A media vida se enfurece.</li>
+              </ul>
+            </div>
+            <div>
+              <p class="label">En grupo</p>
+              <ul class="bul">
+                <li>Tus compas pueden cruzar a ayudarte.</li>
+                <li>Cada uno le da +50% de vida.</li>
+                <li>Va por quien más daño le hace.</li>
+                <li>Si tú no peleas, se cura.</li>
+                <li class="hot">El golpe final solo lo das tú.</li>
+              </ul>
+            </div>
+          </div>
+          <p class="label">Cada revivida pide un sello mayor</p>
+          <div class="seals">
+            <div class="seal"><img class="px" src="img/purge_seal_1.png" alt=""><div><b>Sello I</b><span>Cosas del Nether</span></div></div>
+            <div class="seal"><img class="px" src="img/purge_seal_2.png" alt=""><div><b>Sello II</b><span>Una Ancient City</span></div></div>
+            <div class="seal"><img class="px" src="img/purge_seal_3.png" alt=""><div><b>Sello III</b><span>Botín del End</span></div></div>
+          </div>
+          <p class="prize"><b>Si lo vences,</b> tus compas recuperan los corazones que pagaron, te llevas tu propia cabeza de trofeo y un Tótem de Gracia nuevo.</p>
+        </article>
+
+        <article class="card">
+          <div class="top">
+            <h3>Una sola gracia.</h3>
+            <img class="px totem-img" src="img/grace_totem.png" alt="Tótem de Gracia">
+          </div>
+          <p class="lead">Todos empiezan con un Tótem de Gracia. <span class="c">Llévalo en la mano.</span></p>
+          <div class="verdicts">
+            <div class="verdict"><span class="chip yes">SÍ</span><span>Te salva de un golpe mortal.</span></div>
+            <div class="verdict"><span class="chip but">PERO</span><span>Vuelves al inicio del mundo con las manos vacías.</span></div>
+            <div class="verdict"><span class="chip but">20 MIN</span><span>Tus cosas te esperan donde caíste. Luego se pierden.</span></div>
+            <div class="verdict"><span class="chip no">NO</span><span>Del vacío no te salva.</span></div>
+            <div class="verdict"><span class="chip yes">EXTRA</span><span>Vencer a tu Eco te regala otro.</span></div>
+          </div>
+          <p class="compass"><img class="px" src="img/soul_compass_00.png" alt=""><span>¿No sabes dónde quedaron? La <b style="color:var(--ink)">Brújula de Almas</b> apunta a tus cosas.</span></p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="territorios">
+    <div class="wrap">
+      <div class="head">
+        <p class="label">Ánima Territorios · mod del server</p>
+        <h2>Arma tu equipo. <span class="c">Reclama tu tierra.</span></h2>
+        <p>Abre el mapa, pinta tus chunks y lo de adentro queda protegido: nadie de fuera rompe, abre ni quema nada.</p>
+      </div>
+
+      <div class="terr">
+        <div>
+          <div class="facts">
+            <div class="fact"><b>16</b><span>chunks para empezar, sin pagar nada</span></div>
+            <div class="fact"><b>+32</b><span>más, pagando con minerales</span></div>
+            <div class="fact"><b>14 días</b><span>sin que nadie juegue y tu tierra queda libre</span></div>
+          </div>
+          <div class="ladder" role="table" aria-label="Niveles de ampliación del territorio">
+            <div class="row" role="row"><span class="label" role="cell">Nivel 1</span><svg role="cell" aria-hidden="true" width="42" height="18" viewBox="0 0 14 6" shape-rendering="crispEdges"><path fill="#2c3236" d="M2 0h10v1h-10zM1 1h1v1h-1zM12 1h1v1h-1zM0 2h1v1h-1zM13 2h1v1h-1zM0 3h1v1h-1zM13 3h1v1h-1zM0 4h1v1h-1zM13 4h1v1h-1zM0 5h14v1h-14z"/><path fill="#ffffff" d="M2 1h9v1h-9zM1 2h1v1h-1z"/><path fill="#d6dadb" d="M11 1h1v1h-1zM2 2h10v1h-10zM1 3h11v1h-11z"/><path fill="#959b9e" d="M12 2h1v1h-1zM12 3h1v1h-1zM1 4h12v1h-12z"/></svg><span role="cell">32 lingotes de hierro</span><b role="cell">+8 chunks</b></div>
+            <div class="row" role="row"><span class="label" role="cell">Nivel 2</span><svg role="cell" aria-hidden="true" width="42" height="18" viewBox="0 0 14 6" shape-rendering="crispEdges"><path fill="#4d3305" d="M2 0h10v1h-10zM1 1h1v1h-1zM12 1h1v1h-1zM0 2h1v1h-1zM13 2h1v1h-1zM0 3h1v1h-1zM13 3h1v1h-1zM0 4h1v1h-1zM13 4h1v1h-1zM0 5h14v1h-14z"/><path fill="#fff7c2" d="M2 1h9v1h-9zM1 2h1v1h-1z"/><path fill="#f4c83a" d="M11 1h1v1h-1zM2 2h10v1h-10zM1 3h11v1h-11z"/><path fill="#c38812" d="M12 2h1v1h-1zM12 3h1v1h-1zM1 4h12v1h-12z"/></svg><span role="cell">32 lingotes de oro</span><b role="cell">+8 chunks</b></div>
+            <div class="row" role="row"><span class="label" role="cell">Nivel 3</span><svg role="cell" aria-hidden="true" width="32" height="24" viewBox="0 0 12 9" shape-rendering="crispEdges"><path fill="#0b3a3d" d="M3 0h6v1h-6zM2 1h1v1h-1zM9 1h1v1h-1zM1 2h1v1h-1zM10 2h1v1h-1zM0 3h1v1h-1zM11 3h1v1h-1zM1 4h1v1h-1zM10 4h1v1h-1zM2 5h1v1h-1zM9 5h1v1h-1zM3 6h1v1h-1zM8 6h1v1h-1zM4 7h1v1h-1zM7 7h1v1h-1zM5 8h2v1h-2z"/><path fill="#c9fffb" d="M3 1h2v1h-2zM6 1h2v1h-2zM2 2h2v1h-2z"/><path fill="#ffffff" d="M5 1h1v1h-1z"/><path fill="#4fe3dc" d="M8 1h1v1h-1zM4 2h5v1h-5zM1 3h9v1h-9zM2 4h7v1h-7zM3 5h5v1h-5zM4 6h3v1h-3zM5 7h1v1h-1z"/><path fill="#1c9e9a" d="M9 2h1v1h-1zM10 3h1v1h-1zM9 4h1v1h-1zM8 5h1v1h-1zM7 6h1v1h-1zM6 7h1v1h-1z"/></svg><span role="cell">16 diamantes</span><b role="cell">+8 chunks</b></div>
+            <div class="row" role="row"><span class="label" role="cell">Nivel 4</span><svg role="cell" aria-hidden="true" width="42" height="18" viewBox="0 0 14 6" shape-rendering="crispEdges"><path fill="#120e10" d="M2 0h10v1h-10zM1 1h1v1h-1zM12 1h1v1h-1zM0 2h1v1h-1zM13 2h1v1h-1zM0 3h1v1h-1zM13 3h1v1h-1zM0 4h1v1h-1zM13 4h1v1h-1zM0 5h14v1h-14z"/><path fill="#7b6e72" d="M2 1h9v1h-9zM1 2h1v1h-1z"/><path fill="#463c40" d="M11 1h1v1h-1zM2 2h10v1h-10zM1 3h11v1h-11z"/><path fill="#2d2528" d="M12 2h1v1h-1zM12 3h1v1h-1zM1 4h12v1h-12z"/></svg><span role="cell">4 lingotes de netherita</span><b role="cell">+8 chunks</b></div>
+          </div>
+          <div class="rules">
+            <p>Quien no es de tu equipo no puede:</p>
+            <div class="chips"><span>Romper</span><span>Poner bloques</span><span>Abrir cofres</span><span>Abrir puertas</span><span>Usar palancas</span><span>Usar cubetas</span><span>Tocar tus animales</span></div>
+            <p>Y a tu tierra no le hacen nada:</p>
+            <div class="chips alt"><span>Explosiones</span><span>Fuego</span><span>Mobs</span><span>Pistones y líquidos de afuera</span></div>
+          </div>
+        </div>
+
+        <figure class="mapwin" style="margin:0">
+          <div class="bar">
+            <span class="label" style="color:var(--ink);font-size:14px">Territorios</span>
+            <div class="tabs"><span class="on">Territorio</span><span>Equipo</span><span>Ajustes</span></div>
+          </div>
+          <div class="canvas">
+            <svg viewBox="0 0 840 360" shape-rendering="crispEdges" role="img" aria-label="Ejemplo del mapa de territorios: tu equipo en cian, otros equipos en dorado y violeta, el spawn sin claims y una selección de cuatro chunks"><defs><pattern id="hatch" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="12" height="12" fill="#141d22"></rect><rect width="5" height="12" fill="#22303a"></rect></pattern><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M0 0h40v2h-40zM0 0h2v40h-2z" fill="#0a1215"></path></pattern></defs><path fill="#16281f" d="M0 0h40v40h-40zM80 0h80v40h-80zM360 0h40v40h-40zM520 0h40v40h-40zM800 0h40v40h-40zM160 40h40v40h-40zM720 40h40v40h-40zM800 40h40v40h-40zM320 80h40v40h-40zM440 80h40v40h-40zM520 80h40v40h-40zM400 120h40v40h-40zM680 120h160v40h-160zM560 160h40v40h-40zM160 200h80v40h-80zM320 200h40v40h-40zM480 200h80v40h-80zM600 200h80v40h-80zM280 240h40v40h-40zM560 240h40v40h-40zM800 240h40v40h-40zM520 280h40v40h-40zM640 280h40v40h-40zM760 280h40v40h-40zM360 320h80v40h-80zM520 320h40v40h-40z"></path><path fill="#12221d" d="M40 0h40v40h-40zM160 0h40v40h-40zM320 0h40v40h-40zM400 0h40v40h-40zM680 0h40v40h-40zM760 0h40v40h-40zM320 40h40v40h-40zM400 40h40v40h-40zM640 40h40v40h-40zM160 80h40v40h-40zM560 80h40v40h-40zM760 80h40v40h-40zM200 160h40v40h-40zM360 200h40v40h-40zM800 200h40v40h-40zM320 240h80v40h-80zM680 240h40v40h-40zM360 280h40v40h-40zM480 280h40v40h-40zM600 280h40v40h-40zM680 280h40v40h-40zM120 320h40v40h-40zM280 320h40v40h-40zM440 320h40v40h-40zM720 320h40v40h-40z"></path><path fill="#10263a" d="M200 0h40v40h-40zM280 160h40v40h-40zM200 320h40v40h-40z"></path><path fill="#142620" d="M240 0h80v40h-80zM440 0h40v40h-40zM600 0h40v40h-40zM280 40h40v40h-40zM560 40h80v40h-80zM200 80h40v40h-40zM720 80h40v40h-40zM560 120h80v40h-80zM240 160h40v40h-40zM640 160h80v40h-80zM400 200h80v40h-80zM680 200h40v40h-40zM480 240h80v40h-80zM280 280h40v40h-40zM560 280h40v40h-40zM720 280h40v40h-40zM800 280h40v40h-40zM0 320h40v40h-40zM80 320h40v40h-40zM160 320h40v40h-40zM320 320h40v40h-40zM800 320h40v40h-40z"></path><path fill="#13231e" d="M480 0h40v40h-40zM640 0h40v40h-40zM720 0h40v40h-40zM360 40h40v40h-40zM440 40h120v40h-120zM680 40h40v40h-40zM360 80h80v40h-80zM600 80h40v40h-40zM160 120h80v40h-80zM320 120h40v40h-40zM440 120h120v40h-120zM640 120h40v40h-40zM160 160h40v40h-40zM400 160h40v40h-40zM520 160h40v40h-40zM600 160h40v40h-40zM720 160h120v40h-120zM560 200h40v40h-40zM720 200h40v40h-40zM200 240h40v40h-40zM400 240h80v40h-80zM640 240h40v40h-40zM160 280h40v40h-40zM320 280h40v40h-40zM480 320h40v40h-40zM560 320h160v40h-160z"></path><path fill="#11201b" d="M560 0h40v40h-40zM760 40h40v40h-40zM280 80h40v40h-40zM480 80h40v40h-40zM640 80h80v40h-80zM800 80h40v40h-40zM360 120h40v40h-40zM320 160h80v40h-80zM440 160h80v40h-80zM760 200h40v40h-40zM160 240h40v40h-40zM600 240h40v40h-40zM720 240h80v40h-80zM400 280h80v40h-80zM40 320h40v40h-40zM760 320h40v40h-40z"></path><path fill="#0f2230" d="M200 40h80v40h-80zM240 80h40v40h-40zM240 120h80v40h-80zM240 200h80v40h-80zM240 240h40v40h-40zM200 280h80v40h-80zM240 320h40v40h-40z"></path><rect x="0" y="40" width="160" height="280" fill="url(#hatch)"></rect><rect width="840" height="360" fill="url(#grid)"></rect><path class="mine" fill="#6ff0ee" fill-opacity=".30" d="M360 80h120v40h-120zM320 120h200v40h-200zM320 160h160v40h-160zM360 200h120v40h-120zM400 240h40v40h-40z"></path><path fill="#6ff0ee" d="M320 120h40v4h-40zM320 120h4v40h-4zM320 196h40v4h-40zM320 160h4v40h-4zM360 80h40v4h-40zM360 80h4v40h-4zM360 236h40v4h-40zM360 200h4v40h-4zM400 80h40v4h-40zM400 276h40v4h-40zM400 240h4v40h-4zM436 240h4v40h-4zM440 80h40v4h-40zM476 80h4v40h-4zM476 160h4v40h-4zM440 236h40v4h-40zM476 200h4v40h-4zM480 120h40v4h-40zM480 156h40v4h-40zM516 120h4v40h-4z"></path><path fill="#f0b43c" fill-opacity=".30" d="M640 0h120v40h-120zM600 40h200v40h-200zM640 80h160v40h-160zM680 120h80v40h-80z"></path><path fill="#f0b43c" d="M600 40h40v4h-40zM600 76h40v4h-40zM600 40h4v40h-4zM640 0h40v4h-40zM640 0h4v40h-4zM640 116h40v4h-40zM640 80h4v40h-4zM680 0h40v4h-40zM680 156h40v4h-40zM680 120h4v40h-4zM720 0h40v4h-40zM756 0h4v40h-4zM720 156h40v4h-40zM756 120h4v40h-4zM760 40h40v4h-40zM796 40h4v40h-4zM760 116h40v4h-40zM796 80h4v40h-4z"></path><path fill="#b693ff" fill-opacity=".30" d="M600 240h80v40h-80zM560 280h160v40h-160zM560 320h200v40h-200z"></path><path fill="#b693ff" d="M560 280h40v4h-40zM560 280h4v40h-4zM560 356h40v4h-40zM560 320h4v40h-4zM600 240h40v4h-40zM600 240h4v40h-4zM600 356h40v4h-40zM640 240h40v4h-40zM676 240h4v40h-4zM640 356h40v4h-40zM680 280h40v4h-40zM716 280h4v40h-4zM680 356h40v4h-40zM720 320h40v4h-40zM720 356h40v4h-40zM756 320h4v40h-4z"></path><rect x="3" y="43" width="154" height="274" fill="none" stroke="#56707a" stroke-width="3" stroke-dasharray="8 6"></rect><text x="80" y="187" text-anchor="middle" font-family="Silkscreen, monospace" font-size="20" letter-spacing="3" fill="#a9bcbf">SPAWN</text><rect class="sel" x="483" y="163" width="74" height="74" fill="#ffffff" fill-opacity=".12" stroke="#ffffff" stroke-width="3" stroke-dasharray="6 5"></rect><text x="520" y="208" text-anchor="middle" font-family="Silkscreen, monospace" font-size="22" fill="#ffffff">+4</text><g class="me"><path fill="#0b1216" d="M418 171h3v3h-3zM415 174h3v3h-3zM421 174h3v3h-3zM412 177h3v3h-3zM424 177h3v3h-3zM409 180h3v3h-3zM427 180h3v3h-3zM409 183h3v3h-3zM412 183h3v3h-3zM415 183h3v3h-3zM421 183h3v3h-3zM424 183h3v3h-3zM427 183h3v3h-3zM415 186h3v3h-3zM421 186h3v3h-3zM415 189h3v3h-3zM418 189h3v3h-3zM421 189h3v3h-3z"></path><path fill="#ffffff" d="M418 174h3v3h-3zM415 177h3v3h-3zM418 177h3v3h-3zM421 177h3v3h-3zM412 180h3v3h-3zM415 180h3v3h-3zM418 180h3v3h-3zM421 180h3v3h-3zM424 180h3v3h-3zM418 183h3v3h-3zM418 186h3v3h-3z"></path></g><g class="tip"><rect x="570" y="182" width="206" height="40" fill="#0b1216" stroke="#7df3f0" stroke-width="2"></rect><text x="584" y="209" font-family="Pixelify Sans, sans-serif" font-size="20" fill="#eef5f3">Clic para reclamar</text></g></svg>
+          </div>
+          <figcaption class="legend">
+            <span><i style="background:#6ff0ee"></i>Tu equipo</span>
+            <span><i style="background:#f0b43c"></i><i style="background:#b693ff;margin-left:-4px"></i>Otros</span>
+            <span><i style="background:#22303a;border:2px dashed #56707a"></i>Sin claims</span>
+            <span style="color:var(--dim)">Clic: reclamar · Arrastra: varios · Shift: rectángulo</span>
+          </figcaption>
+        </figure>
+      </div>
+
+      <p class="release"><b>Si la abandonan, se pierde.</b> Si nadie del equipo juega en 14 días, o todos mueren y nadie los revive en 3, el territorio queda libre. Entre compas del mismo equipo no se hacen daño.</p>
+    </div>
+  </section>
+
+  <section class="block" id="mods">
+    <div class="wrap">
+      <div class="head">
+        <p class="label">Lo demás</p>
+        <h2>Es Minecraft. <span class="c">Nomás que no perdona.</span></h2>
+        <p>Semi vanilla: los mods ayudan a jugar mejor y en grupo, pero no cambian el juego base.</p>
+      </div>
+      <div class="feats">
+        <div class="feat"><span class="label">Tom's Simple Storage</span><h3>Base ordenada</h3><p>Conecta tus cofres a una terminal y busca, saca y craftea desde un solo lugar. Los bloques salen en inglés en el juego.</p></div>
+        <div class="feat"><span class="label">Lootr</span><h3>Botín para cada quien</h3><p>Los cofres de estructuras traen loot aparte para cada jugador. Nadie te gana el saqueo.</p></div>
+        <div class="feat"><span class="label">Simple Voice Chat</span><h3>Habla con tu voz</h3><p>Te oyen a 48 bloques, susurrando solo a 24. Con grupos, tu equipo se oye esté donde esté.</p></div>
+        <div class="feat"><span class="label">Fresh Animations · Sound Physics</span><h3>Se ve y se oye mejor</h3><p>Animaciones nuevas en los mobs, skins en 3D, luces dinámicas y sonido con eco en cuevas.</p></div>
+        <div class="feat"><span class="label">Sodium · Lithium · C2ME</span><h3>Optimizado</h3><p>Sodium, Lithium, C2ME y FerriteCore para que no se trabe. Shaders listos con Iris.</p></div>
+        <div class="feat"><span class="label">Comodidades</span><h3>Pequeñas ayudas</h3><p>Hambre y saturación a la vista, cámara al hombro, zoom y mejor manejo del inventario.</p></div>
+      </div>
+
+      <div class="nope">
+        <p class="label">Lo que no hay</p>
+        <div class="nopes">
+          <div><h4>Aldeanos</h4><p>Sin tradeos, ni con el comerciante errante. Todo sale de tus manos.</p></div>
+          <div><h4>Revivir gratis</h4><p>Volver de la muerte siempre se paga.</p></div>
+          <div><h4>Magia ni tech</h4><p>Nada de mods que cambien el juego base.</p></div>
+        </div>
+      </div>
+
+      <details class="mods">
+        <summary>Ver los 54 mods del pack</summary>
+        <div class="modgroups">
+          <div><h4>Hechos para Ánima</h4><p>Deuda de Alma · Ánima Territorios · No Villager Trading</p></div>
+          <div><h4>Jugabilidad</h4><p>Tom's Simple Storage · Lootr · Simple Voice Chat · AppleSkin · Mouse Tweaks · Shoulder Surfing Reloaded · Zoomify · Clumps · Get It Together, Drops! · Let Me Despawn</p></div>
+          <div><h4>Visual y sonido</h4><p>Iris Shaders · Entity Model Features · Entity Texture Features · 3D Skin Layers · LambDynamicLights · Wakes Reforged · Punchy! · Punchy! Moves · Chat Heads · Chat Animation · Sound Physics Remastered</p></div>
+          <div><h4>Rendimiento</h4><p>Sodium · Lithium · C2ME · ScalableLux · FerriteCore · ServerCore · Entity Culling · BadOptimizations · Gnetum · AI Improvements · Connectivity · Structure Essentials · Recipe Essentials · Chunk Sending · Smooth Chunk · Limited Chunks · Fast Async World Save · Leaky · GPU Memory Leak Fix · Client Crafting</p></div>
+          <div><h4>Librerías y utilidades</h4><p>Architectury API · Cloth Config API · YetAnotherConfigLib · KotlinLangForge · BaguetteLib · Almanac · Curios API · Cupboard · Crash Assistant · Chunky</p></div>
+          <div><h4>Texturas y shaders incluidos</h4><p>Fresh Animations · FA+ Player · Fluid &amp; Foolish · Glowing Emissive Ores · Complementary Reimagined · Complementary Unbound · Photon · Solas</p></div>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section class="final">
+    <div class="wrap">
+      <h2>¿Te la rifas?</h2>
+      <p class="sub">Trae a tus compas: los vas a necesitar.</p>
+      <div class="ipbox">
+        <span class="label dim">IP del servidor</span>
+        <div class="iprow">
+          <code id="ip-final" data-ip>165.217.128.151:9085</code>
+          <button class="btn" type="button" id="copy-final" data-copy="ip-final" data-status="status-final">Copiar IP</button>
+        </div>
+        <p class="status" id="status-final" aria-live="polite"></p>
+      </div>
+      <div class="actions">
+        <a class="btn" data-modpack href="https://github.com/blackbulldesigner/anima-hardcore/releases/latest/download/Anima-Hardcore.mrpack" target="_blank" rel="noopener">Descargar modpack</a>
+        <a class="btn ghost invite" href="https://discord.gg/K5Yx7yMeAg" target="_blank" rel="noopener">discord.gg/K5Yx7yMeAg</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Ánima Hardcore 1.0.0 · Minecraft 26.3 · NeoForge 26.3.0.115</span>
+    <span>Página y descargas en <a href="https://github.com/blackbulldesigner/anima-hardcore" target="_blank" rel="noopener">GitHub</a>.</span>
+    <span>No es un producto oficial de Minecraft. No está aprobado ni asociado con Mojang ni Microsoft.</span>
+  </div>
+</footer>
+<div class="hotbar" aria-hidden="true"></div>
+
+<script>
+// Cambia aquí la IP del servidor: se pone sola en los dos recuadros.
+const IP_DEL_SERVIDOR = "165.217.128.151:9085";
+// Link al .mrpack del último release en GitHub (sube cada versión nueva con el mismo nombre de archivo).
+const LINK_DEL_MODPACK = "https://github.com/blackbulldesigner/anima-hardcore/releases/latest/download/Anima-Hardcore.mrpack";
+
+document.querySelectorAll("[data-ip]").forEach(function (el) { el.textContent = IP_DEL_SERVIDOR; });
+
+function selectText(el) {
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+document.querySelectorAll("[data-copy]").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    const code = document.getElementById(btn.dataset.copy);
+    const status = document.getElementById(btn.dataset.status);
+    const text = code.textContent.trim();
+    const row = code.parentElement;
+    const done = function () {
+      status.textContent = "IP copiada. Pégala en Multijugador.";
+      btn.textContent = "¡Copiada!";
+      row.classList.remove("flash");
+      void row.offsetWidth;
+      row.classList.add("flash");
+      setTimeout(function () { btn.textContent = "Copiar IP"; }, 1600);
+    };
+    const fallback = function () { selectText(code); status.textContent = "Ya está seleccionada: cópiala con Ctrl+C."; };
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, fallback);
+      } else { fallback(); }
+    } catch (e) { fallback(); }
+  });
+});
+
+if (/^https:\/\//.test(LINK_DEL_MODPACK)) {
+  document.querySelectorAll("[data-modpack]").forEach(function (a) {
+    a.href = LINK_DEL_MODPACK;
+    a.textContent = "Descargar modpack";
+  });
+}
+
+// Animaciones al hacer scroll. Sin script todo se ve igual, solo que quieto.
+const quieto = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function contar(el) {
+  const b = el.matches(".fact") ? el.querySelector("b") : null;
+  if (!b) return;
+  const m = b.textContent.match(/^(\D*)(\d+)(.*)$/);
+  if (!m) return;
+  const antes = m[1], fin = parseInt(m[2], 10), despues = m[3];
+  const t0 = performance.now(), dur = 900;
+  function paso(now) {
+    const k = Math.min(1, (now - t0) / dur);
+    b.textContent = antes + Math.round(fin * (1 - Math.pow(1 - k, 3))) + despues;
+    if (k < 1) requestAnimationFrame(paso);
+  }
+  requestAnimationFrame(paso);
+}
+
+if (!quieto && "IntersectionObserver" in window) {
+  document.documentElement.classList.add("js-motion");
+  const objetivos = [];
+  document.querySelectorAll(".head, .tl, .subhead, .pair > .card, .mapwin, .release, .nope > .label, details.mods, .final .wrap > *")
+    .forEach(function (el) { objetivos.push(el); });
+  document.querySelectorAll(".steps, .curses, .feats, .seals, .nopes, .facts, .ladder, .verdicts, .chips, .cols")
+    .forEach(function (grupo) {
+      Array.prototype.forEach.call(grupo.children, function (hijo, i) {
+        hijo.style.setProperty("--delay", (i * 70) + "ms");
+        // al terminar de entrar, suelta la animación para que funcione el efecto al pasar el mouse
+        hijo.addEventListener("animationend", function fin(ev) {
+          if (ev.target !== hijo || ev.animationName !== "rise") return;
+          hijo.classList.remove("in");
+          hijo.removeEventListener("animationend", fin);
+        });
+        objetivos.push(hijo);
+      });
+    });
+  const io = new IntersectionObserver(function (entradas) {
+    entradas.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      e.target.classList.add("in");
+      io.unobserve(e.target);
+      contar(e.target);
+    });
+  }, { threshold: 0.12 });
+  objetivos.forEach(function (el) { io.observe(el); });
+}
+</script>
+
+</body>
+</html>
